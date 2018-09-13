@@ -1,7 +1,13 @@
 // TO DO
-// - create functions for other event types 
+// - create functions for other event types
+//		- void trace_instant_global(char* name);
+//		- void trace_object_new(char* name, void* obj_pointer);
+//		- void trace_object_gone(char* name, void* obj_pointer);
+//		- void trace_counter(char* name, char* key, char* value);
 // - implement buffer for dumping traces
 // - implement flushing mechanism
+//		- void trace_flush();
+// - implement argument capabilities?
 #include <iostream>
 #include <fstream>
 #include <string>
