@@ -1,9 +1,9 @@
 // TO DO
 // - create functions for other event types
-//		- void trace_instant_global(char* name);
 //		- void trace_object_new(char* name, void* obj_pointer);
 //		- void trace_object_gone(char* name, void* obj_pointer);
 //		- void trace_counter(char* name, char* key, char* value);
+// - fix comma delimiter
 // - implement buffer for dumping traces
 // - implement flushing mechanism
 //		- void trace_flush();
@@ -44,6 +44,12 @@ void trace_event_start(char* name, char* categories);
 */
 void trace_event_end();
 /*
+* @description Generates line for instant events.
+* @parameters [name] name of instant event
+* @returns none
+*/
+void trace_instant_global(char* name);
+/*
 * @description Closes json file.
 * @parameters none
 * @returns none
@@ -51,10 +57,16 @@ void trace_event_end();
 void trace_end();
 //----------------------------------------------------------------------------------
 int main() {
-	char name_array[] = "C:\\Users\\D\\Desktop\\trace.json";
-	char* filename_ptr = name_array; // pointer to file name/location
+	char path[] = "C:\\Users\\D\\Desktop\\trace.json"; // file path
+	char instant_name[] = "Instant"; // name for instant event
+	char* filename_ptr = path; // pointer to file name/path
+	char* instant_ptr = instant_name; // pointer to instant event name
+	
 	trace_start(filename_ptr); // begin output (opening square bracket)
+	
+	trace_instant_global(instant_ptr); // generate instant event
 	recursion(reps, 0); // generate events (reps + 1)
+
 	trace_end(); // end output (closing square bracket)
 	return 0;
 }
@@ -66,14 +78,14 @@ int recursion(int a, int b) {
 	char* test_name = name_array; // pointer to event name
 	char* test_cat = cat_array; // pointer to event category
 
-	trace_event_start(test_name, test_cat); // generate event beginning line
+	trace_event_start(test_name, test_cat); // generate duration event beginning line
 	if (a == 0) {
-		trace_event_end(); // generate event ending line
+		trace_event_end(); // generate duration event ending line
 		return b;
 	}
 	else {
 		int result = recursion(a - 1, b + 1);
-		trace_event_end(); // generate event ending line
+		trace_event_end(); // generate duration event ending line
 		return result;
 	}
 }
@@ -86,25 +98,39 @@ void trace_event_start(char* name, char* categories) {
 	json_file << "\"name\": \"" << name << "\", "; // name
 	json_file << "\"cat\": \"" << categories << "\", "; // category
 	json_file << "\"ph\": \"B\", "; // phase
+	json_file << "\"ts\": "; // timestamp
+	json_file << chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now().time_since_epoch()).count();
+	json_file << ", ";
 	json_file << "\"pid\": 1, "; // process ID
-	json_file << "\"tid\": 1, "; // thread ID
-								 // timestamp
-	json_file << "\"ts\": " << chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now().time_since_epoch()).count();
+	json_file << "\"tid\": 1"; // thread ID
 	json_file << "}," << endl; // terminate line with closing brace and comma
 }
 void trace_event_end() {
 	iters += 1; // increment event counter
 	json_file << "{"; // opening brace
 	json_file << "\"ph\": \"E\", "; // phase
+	json_file << "\"ts\": "; // timestamp
+	json_file << chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now().time_since_epoch()).count();
+	json_file << ", ";
 	json_file << "\"pid\": 1, "; // process ID
-	json_file << "\"tid\": 1, "; // thread ID
-								 // timestamp
-	json_file << "\"ts\": " << chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now().time_since_epoch()).count();
+	json_file << "\"tid\": 1"; // thread ID
 	json_file << "}"; // closing brace
 	if (iters < (reps + 1)) {
 		json_file << ","; // terminate line with comma if not the last line in trace
 	}
 	json_file << endl; // newline
+}
+void trace_instant_global(char* name) {
+	json_file << "{"; // opening brace
+	json_file << "\"name\": \"" << name << "\", "; // name
+	json_file << "\"ph\": \"i\", "; // phase
+	json_file << "\"ts\": "; // timestamp
+	json_file << chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now().time_since_epoch()).count();
+	json_file << ", ";
+	json_file << "\"pid\": 1, "; // process ID
+	json_file << "\"tid\": 1, "; // thread ID
+	json_file << "\"s\": \"g\""; // scope
+	json_file << "}," << endl; // terminate line with closing brace and comma
 }
 void trace_end() {
 	json_file << "]"; // closing bracket for trace file
