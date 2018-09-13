@@ -1,34 +1,44 @@
+// TO DO
+// - create functions for other event types 
+// - implement buffer for dumping traces
+// - implement flushing mechanism
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <chrono>
 using namespace std;
-ofstream json_file; // json file for tracing
+// global things
+ofstream json_file; // json file name/path for tracing
 int reps = 9; // number of events to generate - 1
 int iters = 0; // number of events generated
 
-			   // function prototypes
+// function prototypes
+/*
+* @description Generates dummy events for testing.
+* @parameters [a, b] a > b, number of events generated is a + 1
+* @returns none
+*/
 int recursion(int a, int b);
 /*
-* @description Creates trace file.
-* @parameters [filename] pointer to file name
+* @description Opens json file for tracing.
+* @parameters [filename] pointer to file name/path
 * @returns none
 */
 void trace_start(char* filename);
 /*
-* @description
-* @parameters []
+* @description Generates the beginning line for duration events.
+* @parameters [name, categories] name is the name of the event, category is its category
 * @returns none
 */
 void trace_event_start(char* name, char* categories);
 /*
-* @description Ends trace event.
-* @parameters [arguments] pointer to ??
+* @description Generates ending line for duration events.
+* @parameters none
 * @returns none
 */
 void trace_event_end();
 /*
-* @description Dump tracing data to file and end tracing.
+* @description Closes json file.
 * @parameters none
 * @returns none
 */
