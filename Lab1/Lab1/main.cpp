@@ -1,8 +1,4 @@
 // TO DO
-// - create functions for other event types
-//		- void trace_object_new(char* name, void* obj_pointer);
-//		- void trace_object_gone(char* name, void* obj_pointer);
-//		- void trace_counter(char* name, char* key, char* value);
 // - fix comma delimiter
 // - implement buffer for dumping traces
 // - implement flushing mechanism
@@ -16,7 +12,7 @@ using namespace std;
 // global things
 ofstream json_file; // json file name/path for tracing
 int reps = 9; // number of events to generate - 1
-int iters = 0; // number of events generated
+int num_events = 0; // number of events generated
 
 // function prototypes
 /*
@@ -50,6 +46,24 @@ void trace_event_end();
 */
 void trace_instant_global(char* name);
 /*
+* @description Generates beginning line for object events.
+* @parameters [name, obj_pointer] name of object event, pointer to object in question
+* @returns none
+*/
+void trace_object_new(char* name, void* obj_pointer);
+/*
+* @description Generates ending line for object events.
+* @parameters [name, obj_pointer] name of object event, pointer to object in question
+* @returns none
+*/
+void trace_object_gone(char* name, void* obj_pointer);
+/*
+* @description Generates line for counter events.
+* @parameters [name, key, value] name of counter event, thing to tally, tally
+* @returns none
+*/
+void trace_counter(char* name, char* key, char* value);
+/*
 * @description Closes json file.
 * @parameters none
 * @returns none
@@ -57,14 +71,27 @@ void trace_instant_global(char* name);
 void trace_end();
 //----------------------------------------------------------------------------------
 int main() {
-	char path[] = "C:\\Users\\D\\Desktop\\trace.json"; // file path
+    char path[] = "trace.json"; // file path for lab
+	//char path[] = "C:\\Users\\D\\Desktop\\trace.json"; // file path for DW's PC
 	char instant_name[] = "Instant"; // name for instant event
+	char obj_name[] = "Object"; // name for object event
+	char object[] = "blah";
+	char counter_name[] = "Counter"; // name for counter event
+	char counter_key[] = "Pepes"; // counter key
+	char counter_value[] = "27"; // counter value for key
 	char* filename_ptr = path; // pointer to file name/path
 	char* instant_ptr = instant_name; // pointer to instant event name
+	char* obj_name_ptr = obj_name; // pointer to object event name
+	char* obj_ptr = object;
+	char* counter_name_ptr = counter_name;
+	char* counter_key_ptr = counter_key;
+	char* counter_value_ptr = counter_value;
 	
 	trace_start(filename_ptr); // begin output (opening square bracket)
-	
+	trace_object_new(obj_name_ptr, obj_ptr); // generate object event
+	trace_counter(counter_name_ptr, counter_key_ptr, counter_value_ptr); // generate counter event
 	trace_instant_global(instant_ptr); // generate instant event
+	trace_object_gone(obj_name_ptr, obj_ptr); // end object event
 	recursion(reps, 0); // generate events (reps + 1)
 
 	trace_end(); // end output (closing square bracket)
@@ -106,7 +133,7 @@ void trace_event_start(char* name, char* categories) {
 	json_file << "}," << endl; // terminate line with closing brace and comma
 }
 void trace_event_end() {
-	iters += 1; // increment event counter
+	num_events += 1; // increment event counter
 	json_file << "{"; // opening brace
 	json_file << "\"ph\": \"E\", "; // phase
 	json_file << "\"ts\": "; // timestamp
@@ -115,7 +142,7 @@ void trace_event_end() {
 	json_file << "\"pid\": 1, "; // process ID
 	json_file << "\"tid\": 1"; // thread ID
 	json_file << "}"; // closing brace
-	if (iters < (reps + 1)) {
+	if (num_events < (reps + 1)) {
 		json_file << ","; // terminate line with comma if not the last line in trace
 	}
 	json_file << endl; // newline
@@ -130,6 +157,41 @@ void trace_instant_global(char* name) {
 	json_file << "\"pid\": 1, "; // process ID
 	json_file << "\"tid\": 1, "; // thread ID
 	json_file << "\"s\": \"g\""; // scope
+	json_file << "}," << endl; // terminate line with closing brace and comma
+}
+void trace_object_new(char* name, void* obj_pointer){
+	json_file << "{"; // opening brace
+	json_file << "\"name\": \"" << name << "\", "; // name
+	json_file << "\"ph\": \"N\", "; // phase
+	json_file << "\"id\": \"" << obj_pointer << "\", "; // object ID
+	json_file << "\"ts\": "; // timestamp
+	json_file << chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now().time_since_epoch()).count();
+	json_file << ", ";
+	json_file << "\"pid\": 1, "; // process ID
+	json_file << "\"tid\": 1"; // thread ID
+	json_file << "}," << endl; // terminate line with closing brace and comma
+}
+void trace_object_gone(char* name, void* obj_pointer){
+	json_file << "{"; // opening brace
+	json_file << "\"name\": \"" << name << "\", "; // name
+	json_file << "\"ph\": \"D\", "; // phase
+	json_file << "\"id\": \"" << obj_pointer << "\", "; // object ID
+	json_file << "\"ts\": "; // timestamp
+	json_file << chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now().time_since_epoch()).count();
+	json_file << ", ";
+	json_file << "\"pid\": 1, "; // process ID
+	json_file << "\"tid\": 1"; // thread ID
+	json_file << "}," << endl; // terminate line with closing brace and comma
+}
+void trace_counter(char* name, char* key, char* value){
+	json_file << "{"; // opening brace
+	json_file << "\"name\": \"" << name << "\", "; // name
+	json_file << "\"ph\": \"C\", "; // phase
+	json_file << "\"ts\": "; // timestamp
+	json_file << chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now().time_since_epoch()).count();
+	json_file << ", ";
+	json_file << "\"pid\": 1, "; // process ID
+	json_file << "\"args\": {\"" << key << "\": " << value << "}"; // arguments (counter)
 	json_file << "}," << endl; // terminate line with closing brace and comma
 }
 void trace_end() {
