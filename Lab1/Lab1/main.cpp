@@ -10,8 +10,6 @@
 using namespace std;
 // global things
 ofstream json_file; // json file name/path for tracing
-int buffer_size = 10; // number of events to generate
-int event_counter = 0; // tracks number of events generated
 
 // function prototypes
 /*
@@ -70,8 +68,8 @@ void trace_counter(char* name, char* key, char* value);
 void trace_end();
 //----------------------------------------------------------------------------------
 int main() {
-    char path[] = "trace.json"; // file path for lab
-	//char path[] = "C:\\Users\\D\\Desktop\\trace.json"; // file path for DW's PC
+    //char path[] = "trace.json"; // file path for lab
+	char path[] = "C:\\Users\\D\\Desktop\\trace.json"; // file path for DW's PC
 	char instant_name[] = "Instant"; // name for instant event
 	char name_array[] = "Test"; // name of all events
 	char cat_array[] = "Duration"; // category of all events
@@ -134,7 +132,6 @@ void trace_start(char* filename) {
 	json_file << "[\n"; // opening bracket for trace file
 }
 void trace_event_start(char* name, char* categories) {
-	event_counter++; // increment event counter
 	json_file << "{"; // opening brace
 	json_file << "\"name\": \"" << name << "\", "; // name
 	json_file << "\"cat\": \"" << categories << "\", "; // category
@@ -147,7 +144,6 @@ void trace_event_start(char* name, char* categories) {
 	json_file << "}," << endl; // terminate line with closing brace and comma
 }
 void trace_event_end() {
-	event_counter++; // increment event counter
 	json_file << "{"; // opening brace
 	json_file << "\"ph\": \"E\", "; // phase
 	json_file << "\"ts\": "; // timestamp
@@ -156,13 +152,10 @@ void trace_event_end() {
 	json_file << "\"pid\": 1, "; // process ID
 	json_file << "\"tid\": 1"; // thread ID
 	json_file << "}"; // closing brace
-	if (event_counter < buffer_size){
-		json_file << ",";
-	}
+	json_file << ",";
 	json_file << endl; // terminate with newline
 }
 void trace_instant_global(char* name) {
-	event_counter++; // increment event counter
 	json_file << "{"; // opening brace
 	json_file << "\"name\": \"" << name << "\", "; // name
 	json_file << "\"ph\": \"i\", "; // phase
@@ -173,13 +166,10 @@ void trace_instant_global(char* name) {
 	json_file << "\"tid\": 1, "; // thread ID
 	json_file << "\"s\": \"g\""; // scope
 	json_file << "}"; // closing brace
-	if (event_counter < buffer_size){
-		json_file << ",";
-	}
+	json_file << ",";
 	json_file << endl; // terminate with newline
 }
 void trace_object_new(char* name, void* obj_pointer){
-	event_counter++; // increment event counter
 	json_file << "{"; // opening brace
 	json_file << "\"name\": \"" << name << "\", "; // name
 	json_file << "\"ph\": \"N\", "; // phase
@@ -192,7 +182,6 @@ void trace_object_new(char* name, void* obj_pointer){
 	json_file << "}," << endl; // terminate line with closing brace and comma
 }
 void trace_object_gone(char* name, void* obj_pointer){
-	event_counter++; // increment event counter
 	json_file << "{"; // opening brace
 	json_file << "\"name\": \"" << name << "\", "; // name
 	json_file << "\"ph\": \"D\", "; // phase
@@ -203,13 +192,10 @@ void trace_object_gone(char* name, void* obj_pointer){
 	json_file << "\"pid\": 1, "; // process ID
 	json_file << "\"tid\": 1"; // thread ID
 	json_file << "}"; // closing brace
-	if (event_counter < buffer_size){
-		json_file << ",";
-	}
+	json_file << ",";
 	json_file << endl; // terminate with newline
 }
 void trace_counter(char* name, char* key, char* value){
-	event_counter++; // increment event counter
 	json_file << "{"; // opening brace
 	json_file << "\"name\": \"" << name << "\", "; // name
 	json_file << "\"ph\": \"C\", "; // phase
@@ -219,12 +205,10 @@ void trace_counter(char* name, char* key, char* value){
 	json_file << "\"pid\": 1, "; // process ID
 	json_file << "\"args\": {\"" << key << "\": " << value << "}"; // arguments (counter)
 	json_file << "}"; // closing brace
-	if (event_counter < buffer_size){
-		json_file << ",";
-	}
+	json_file << ",";
 	json_file << endl; // terminate with newline
 }
 void trace_end() {
-	json_file << "]"; // closing bracket for trace file
+	json_file << "{}]"; // extra curlies to offset comma problem, closing bracket for trace file
 	json_file.close(); // close json file
 }
