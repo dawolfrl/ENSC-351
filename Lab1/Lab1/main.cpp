@@ -13,7 +13,7 @@ struct traceStruct {
 	char* category;
 	char phase;
 	void* objectID;
-	long long timestamp;
+	__int64 timestamp;
 	int pid;
 	int tid;
 	char scope;
@@ -129,9 +129,6 @@ int main() {
 		trace_event_end();
 		trace_event_end();
 		trace_event_end();
-		if (bufferCounter == BUFFER_MAX) {
-			trace_flush();
-		}
 	}
 	trace_end(); // end output (closing square bracket)
 	return 0;
@@ -143,6 +140,9 @@ void trace_start(char* filename) {
 	json_file << "[\n"; // opening bracket for trace file
 }
 void trace_event_start(char* name, char* categories) {
+	if (bufferCounter == BUFFER_MAX) {
+		trace_flush();
+	}
 	// internal info
 	traceBuffer[bufferCounter].position = bufferCounter + 1; // line number
 	traceBuffer[bufferCounter].type = 'S'; // S = start
@@ -156,6 +156,9 @@ void trace_event_start(char* name, char* categories) {
 	bufferCounter++;
 }
 void trace_event_end() {
+	if (bufferCounter == BUFFER_MAX) {
+		trace_flush();
+	}
 	// internal info
 	traceBuffer[bufferCounter].position = bufferCounter + 1; // line number
 	traceBuffer[bufferCounter].type = 'E'; // E = end
@@ -167,6 +170,9 @@ void trace_event_end() {
 	bufferCounter++;
 }
 void trace_instant_global(char* name) {
+	if (bufferCounter == BUFFER_MAX) {
+		trace_flush();
+	}
 	// internal info
 	traceBuffer[bufferCounter].position = bufferCounter + 1; // line number
 	traceBuffer[bufferCounter].type = 'I'; // I = instant
@@ -180,6 +186,9 @@ void trace_instant_global(char* name) {
 	bufferCounter++;
 }
 void trace_object_new(char* name, void* obj_pointer){
+	if (bufferCounter == BUFFER_MAX) {
+		trace_flush();
+	}
 	// internal info
 	traceBuffer[bufferCounter].position = bufferCounter + 1; // line number
 	traceBuffer[bufferCounter].type = 'N'; // N = object new
@@ -193,6 +202,9 @@ void trace_object_new(char* name, void* obj_pointer){
 	bufferCounter++;
 }
 void trace_object_gone(char* name, void* obj_pointer){
+	if (bufferCounter == BUFFER_MAX) {
+		trace_flush();
+	}
 	// internal info
 	traceBuffer[bufferCounter].position = bufferCounter + 1; // line number
 	traceBuffer[bufferCounter].type = 'G'; // G = object gone
@@ -206,6 +218,9 @@ void trace_object_gone(char* name, void* obj_pointer){
 	bufferCounter++;
 }
 void trace_counter(char* name, char* key, char* value){
+	if (bufferCounter == BUFFER_MAX) {
+		trace_flush();
+	}
 	// internal info
 	traceBuffer[bufferCounter].position = bufferCounter + 1; // line number
 	traceBuffer[bufferCounter].type = 'C'; // C = counter
@@ -221,7 +236,52 @@ void trace_counter(char* name, char* key, char* value){
 }
 void trace_flush() {
 	int i = 0;
+	string lineOfTrace;
 	while (i != bufferCounter) {
+		lineOfTrace = "";
+		lineOfTrace.append("{"); // opening brace
+		if (traceBuffer[i].type != 'E') {
+			lineOfTrace.append("\"name\": \""); // name
+			lineOfTrace += traceBuffer[i].name; // name
+			lineOfTrace.append("\", "); // name
+			if (traceBuffer[i].type == 'S') {
+				lineOfTrace.append("\"cat\": \""); // category
+				lineOfTrace += traceBuffer[i].category; // category
+				lineOfTrace.append("\", "); // category
+			}
+		}
+		lineOfTrace.append("\"ph\": \""); // phase
+		lineOfTrace += traceBuffer[i].phase; // phase
+		lineOfTrace.append("\""); // phase
+		if (traceBuffer[i].type == 'N') {
+			string *objectIDStr = reinterpret_cast <string *>(traceBuffer[i].objectID);
+			lineOfTrace.append(", \"id\": \"");
+			lineOfTrace.append(objectIDStr);
+			lineOfTrace.append("\""); // object ID
+		}
+		//string timestampStr = to_string(*traceBuffer[i].timestamp);
+		lineOfTrace.append(", \"ts\": ", traceBuffer[i].timestamp); // timestamp
+		lineOfTrace.append(", \"pid\": ", traceBuffer[i].pid); // process ID
+		if (traceBuffer[i].type == 'C') {
+			lineOfTrace.append(", \"args\": {\"");
+			lineOfTrace += traceBuffer[i].key;
+			lineOfTrace.append("\": ");
+			lineOfTrace += traceBuffer[i].value;
+			lineOfTrace.append("}"); // arguments (counter)
+		}
+		else {
+			lineOfTrace.append(", \"tid\": ", traceBuffer[i].tid); // thread ID
+		}
+		if (traceBuffer[i].type == 'I') {
+			lineOfTrace.append(", \"s\": \"");
+			lineOfTrace += traceBuffer[i].scope;
+			lineOfTrace.append("\""); // scope
+		}
+		lineOfTrace.append("},\n"); // closing brace and newline
+		i++;
+		json_file << lineOfTrace;
+	}
+/*	while (i != bufferCounter) {
 		json_file << "{"; // opening brace
 		if (traceBuffer[i].type != 'E') {
 			json_file << "\"name\": \"" << traceBuffer[i].name << "\", "; // name
@@ -246,7 +306,7 @@ void trace_flush() {
 		}
 		json_file << "}," << endl; // closing brace and newline
 		i++;
-	}
+	}*/
 	//memset(&traceBuffer, 0, bufferCounter);
 	bufferCounter = 0; // reset buffer
 }
