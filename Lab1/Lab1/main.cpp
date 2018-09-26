@@ -254,63 +254,44 @@ void trace_flush() {
 		lineOfTrace += traceBuffer[i].phase; // phase
 		lineOfTrace.append("\""); // phase
 		if (traceBuffer[i].type == 'N') {
-			string *objectIDStr = reinterpret_cast <string *>(traceBuffer[i].objectID);
+			char *objectIDStr = reinterpret_cast <char *>(traceBuffer[i].objectID);
 			lineOfTrace.append(", \"id\": \"");
 			lineOfTrace.append(objectIDStr);
 			lineOfTrace.append("\""); // object ID
 		}
-		//string timestampStr = to_string(*traceBuffer[i].timestamp);
-		lineOfTrace.append(", \"ts\": ", traceBuffer[i].timestamp); // timestamp
-		lineOfTrace.append(", \"pid\": ", traceBuffer[i].pid); // process ID
+		char timestampArray[20];
+		sprintf_s(timestampArray, 20, "%llu", traceBuffer[i].timestamp); // timestamp
+		lineOfTrace.append(", \"ts\": "); // timestamp
+		lineOfTrace += timestampArray; // timestamp
+		lineOfTrace.append(", \"pid\": "); // process ID
+		string pidValue = to_string(traceBuffer[i].pid); // process ID
+		lineOfTrace.append(pidValue); // process ID
 		if (traceBuffer[i].type == 'C') {
-			lineOfTrace.append(", \"args\": {\"");
-			lineOfTrace += traceBuffer[i].key;
-			lineOfTrace.append("\": ");
-			lineOfTrace += traceBuffer[i].value;
+			lineOfTrace.append(", \"args\": {\""); // arguments (counter)
+			lineOfTrace += traceBuffer[i].key; // arguments (counter)
+			lineOfTrace.append("\": "); // arguments (counter)
+			lineOfTrace += traceBuffer[i].value; // arguments (counter)
 			lineOfTrace.append("}"); // arguments (counter)
 		}
 		else {
-			lineOfTrace.append(", \"tid\": ", traceBuffer[i].tid); // thread ID
+			lineOfTrace.append(", \"tid\": "); // thread ID
+			string tidValue = to_string(traceBuffer[i].tid); // thread ID
+			lineOfTrace.append(tidValue); // thread ID
 		}
 		if (traceBuffer[i].type == 'I') {
-			lineOfTrace.append(", \"s\": \"");
-			lineOfTrace += traceBuffer[i].scope;
+			lineOfTrace.append(", \"s\": \""); // scope
+			lineOfTrace += traceBuffer[i].scope; // scope
 			lineOfTrace.append("\""); // scope
 		}
 		lineOfTrace.append("},\n"); // closing brace and newline
 		i++;
 		json_file << lineOfTrace;
 	}
-/*	while (i != bufferCounter) {
-		json_file << "{"; // opening brace
-		if (traceBuffer[i].type != 'E') {
-			json_file << "\"name\": \"" << traceBuffer[i].name << "\", "; // name
-			if (traceBuffer[i].type == 'S') {
-				json_file << "\"cat\": \"" << traceBuffer[i].category << "\", "; // category
-			}
-		}
-		json_file << "\"ph\": \"" << traceBuffer[i].phase << "\""; // phase
-		if (traceBuffer[i].type == 'N') {
-			json_file << ", \"id\": \"" << traceBuffer[i].objectID << "\""; // object ID
-		}
-		json_file << ", \"ts\": " << traceBuffer[i].timestamp; // timestamp
-		json_file << ", \"pid\": " << traceBuffer[i].pid; // process ID
-		if (traceBuffer[i].type == 'C') {
-			json_file << ", \"args\": {\"" << traceBuffer[i].key << "\": " << traceBuffer[i].value << "}"; // arguments (counter)
-		}
-		else {
-			json_file << ", \"tid\": " << traceBuffer[i].tid; // thread ID
-		}
-		if (traceBuffer[i].type == 'I') {
-			json_file << ", \"s\": \"" << traceBuffer[i].scope << "\""; // scope
-		}
-		json_file << "}," << endl; // closing brace and newline
-		i++;
-	}*/
-	//memset(&traceBuffer, 0, bufferCounter);
+	memset(&traceBuffer, 0, bufferCounter); // clear buffer
 	bufferCounter = 0; // reset buffer
 }
 void trace_end() {
+	trace_flush();
 	json_file << "{}]"; // extra curlies to offset comma problem, closing bracket for trace file
 	json_file.close(); // close json file
 }
