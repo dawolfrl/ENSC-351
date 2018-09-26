@@ -247,7 +247,7 @@ void trace_flush() {
 		json_file << "}," << endl; // closing brace and newline
 		i++;
 	}
-	//memset(&traceBuffer, 0, bufferCounter);
+	memset(&traceBuffer, 0, bufferCounter);
 	bufferCounter = 0; // reset buffer
 }
 void trace_end() {

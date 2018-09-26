@@ -105,7 +105,7 @@ int main() {
 	trace_start(filename_ptr); // begin output (opening square bracket)
 	// testing
 	int loop = 0;
-	while (loop != 50) {
+	while (loop != 500) {
 		loop++;
 		trace_event_start(test_name, test_cat);
 		trace_event_start(test_name, test_cat);
@@ -247,7 +247,6 @@ void trace_flush() {
 		json_file << "}," << endl; // closing brace and newline
 		i++;
 	}
-	//memset(&traceBuffer, 0, bufferCounter);
 	bufferCounter = 0; // reset buffer
 }
 void trace_end() {
