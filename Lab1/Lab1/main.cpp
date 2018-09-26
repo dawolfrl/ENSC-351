@@ -102,10 +102,11 @@ int main() {
 	char* counter_key_ptr = counter_key;
 	char* counter_value_ptr = counter_value;
 	
+	trace_start(filename_ptr); // begin output (opening square bracket)
 	// testing
 	int loop = 0;
-	while (loop != 20) {
-		trace_start(filename_ptr); // begin output (opening square bracket)
+	while (loop != 50000) {
+		loop++;
 		trace_event_start(test_name, test_cat);
 		trace_event_start(test_name, test_cat);
 		trace_event_start(test_name, test_cat);
@@ -128,9 +129,10 @@ int main() {
 		trace_event_end();
 		trace_event_end();
 		trace_event_end();
-		loop++;
+		if (bufferCounter == BUFFER_MAX) {
+			trace_flush();
+		}
 	}
-	trace_flush();
 	trace_end(); // end output (closing square bracket)
 	return 0;
 }
@@ -249,6 +251,7 @@ void trace_flush() {
 	bufferCounter = 0; // reset buffer
 }
 void trace_end() {
+	delete[] traceBuffer;
 	json_file << "{}]"; // extra curlies to offset comma problem, closing bracket for trace file
 	json_file.close(); // close json file
 }
