@@ -82,7 +82,7 @@ void trace_end();
 //----------------------------------------------------------------------------------
 int main() {
     //char path[] = "trace.json"; // file path for lab
-	char path[] = "C:\\Users\\D\\Desktop\\traceDummy.json"; // file path for DW's PC
+	char path[] = "C:\\Users\\D\\Desktop\\trace.json"; // file path for DW's PC
 	// dummy variables for testing
 	char instant_name[] = "Instant"; // name for instant event
 	char name_array[] = "Test"; // name of all events
