@@ -6,6 +6,11 @@
 // How do you create threads that do nothing?
 // Partner?
 
+// lock implementation
+// https://www2.cs.duke.edu/courses/spring09/cps110/handouts/threads3-spring09.pdf
+// thread pool
+// https://softwareengineering.stackexchange.com/questions/173575/what-is-a-thread-pool
+
 #include <iostream>
 #include <thread>
 using namespace std;
