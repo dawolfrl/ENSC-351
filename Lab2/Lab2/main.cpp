@@ -8,6 +8,8 @@
 
 // lock implementation
 // https://www2.cs.duke.edu/courses/spring09/cps110/handouts/threads3-spring09.pdf
+// spinlock implementation
+// https://stackoverflow.com/questions/17325888/c11-thread-waiting-behaviour-stdthis-threadyield-vs-stdthis-thread
 // thread pool
 // https://softwareengineering.stackexchange.com/questions/173575/what-is-a-thread-pool
 
