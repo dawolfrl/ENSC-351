@@ -4,6 +4,7 @@
 
 // What is variable all_threads_are_created?
 // How do you create threads that do nothing?
+// Partner?
 
 #include <iostream>
 #include <thread>
@@ -21,11 +22,9 @@ void setup(thread *array) {
 		i++; // incrememnt thread creation counter
 	}
 }
-
 void getLock() {
-
+	enterDoor();
 }
-
 void enterDoor() {
 	door++;
 }
