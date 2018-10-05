@@ -2,42 +2,48 @@
 // 2) array of 1000 bools (1/thread)
 // 3) self-implemented ticket lock
 
-// What is variable all_threads_are_created?
-// How do you create threads that do nothing?
-// Partner?
-
-// lock implementation
-// https://www2.cs.duke.edu/courses/spring09/cps110/handouts/threads3-spring09.pdf
-// spinlock implementation
-// https://stackoverflow.com/questions/17325888/c11-thread-waiting-behaviour-stdthis-threadyield-vs-stdthis-thread
-// thread pool
-// https://softwareengineering.stackexchange.com/questions/173575/what-is-a-thread-pool
-
 #include <iostream>
 #include <thread>
 using namespace std;
 
-const int NUM_THREADS = 1000;
+const int NUM_THREADS = 5; // number of threads
+int i = 0; // thread creation counter
 int door = 0; // door counter
 bool all_threads_created = false; // status to keep threads spinning
 thread threadArray[NUM_THREADS]; // all threads (thread pool?)
 
-void setup(thread *array) {
-	int i = 0; // thread creation counter
-	while (i < NUM_THREADS) {
-		array[i] = thread (); // create a thread
-		i++; // incrememnt thread creation counter
-	}
-}
-void getLock() {
-	enterDoor();
-}
-void enterDoor() {
-	door++;
-}
+void setup(thread *array);
+void spin();
+void enterDoor();
 
 int main() {
 	setup(threadArray); // create threads
-	// try pthread_lock
 	return 0;
+}
+
+void setup(thread *array) {
+	while (i < NUM_THREADS) {
+		array[i] = thread(spin); // create a thread
+		cout << "Thread created: " << i << endl; // output check
+		i++; // incrememnt thread creation counter
+	}
+}
+void spin(){
+	while(all_threads_created == false){
+		// spin lock; do nothing
+		cout << "Spinning..." << endl;
+		if (i == NUM_THREADS){
+			all_threads_created = true;
+			cout << "All threads created" << endl;
+		}
+	}
+	while (i != 0){
+		i--;
+		threadArray[i].join();
+	}
+	cout << "Lock acquired" << endl;
+}
+void enterDoor() {
+	door++; // count number passed
+	cout << door << endl;
 }
