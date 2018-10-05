@@ -6,14 +6,14 @@
 #include <thread>
 using namespace std;
 
-const int NUM_THREADS = 5; // number of threads
+const int NUM_THREADS = 1000; // number of threads
 int i = 0; // thread creation counter
 int door = 0; // door counter
 bool all_threads_created = false; // status to keep threads spinning
 thread threadArray[NUM_THREADS]; // all threads (thread pool?)
 
 void setup(thread *array);
-void spin();
+void grabLock();
 void enterDoor();
 
 int main() {
@@ -23,27 +23,30 @@ int main() {
 
 void setup(thread *array) {
 	while (i < NUM_THREADS) {
-		array[i] = thread(spin); // create a thread
+		array[i] = thread(grabLock); // create a thread
 		cout << "Thread created: " << i << endl; // output check
 		i++; // incrememnt thread creation counter
 	}
-}
-void spin(){
+	i = 0;
 	while(all_threads_created == false){
 		// spin lock; do nothing
-		cout << "Spinning..." << endl;
+		while(i < NUM_THREADS){
+			cout << "Joining thread " << threadArray[i].get_id() << endl;
+			threadArray[i].join();
+			i++;
+		}
+		cout << "All threads created" << endl;
 		if (i == NUM_THREADS){
 			all_threads_created = true;
-			cout << "All threads created" << endl;
+			cout << "All threads joined" << endl;
 		}
 	}
-	while (i != 0){
-		i--;
-		threadArray[i].join();
-	}
-	cout << "Lock acquired" << endl;
+}
+void grabLock(){
+	cout << "Lock grabbed" << endl;
+	enterDoor();
 }
 void enterDoor() {
 	door++; // count number passed
-	cout << door << endl;
+	cout << "People in: " << door << endl;
 }
