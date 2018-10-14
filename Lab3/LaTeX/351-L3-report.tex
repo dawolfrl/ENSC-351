@@ -1,6 +1,5 @@
 \documentclass[12pt, letterpaper]{article}
 \usepackage[margin=2.5cm]{geometry}
-\usepackage{indentfirst}
 \usepackage{times}
 \usepackage{graphicx}
 \usepackage[utf8]{inputenc}
@@ -15,14 +14,17 @@
 \author{Nic Klaassen, Galen Elfert, Diane Wolf}
 \maketitle
 % text
-\setlength\parindent{1cm}
 \section{Explanation of workload}
+	The workload invented to fit the MapReduce framework better than word counts was {[matrix multiplication | sorting?]}
 \subsection{Conception}
-\subsection{Speed: MapReduce vs. single-threaded implementation}
-
+	{[Matrix multiplication | sorting]} was chosen as a better alternative to word counts because...
+\subsection{Speed: Single-threaded implementation}
+\subsection{Speed: MapReduce implementation}
+\subsection{Comparison}
 \section{Word count efficiency}
-\subsection{MapReduce implementation}
+	Both implementations of the program counted the instances of words in the first five paragraphs (516 words) of Lorem Ipsum.
 \subsection{Single-threaded implementation}
+\subsection{MapReduce implementation}
 \subsection{Comparison}
 
 \section{Most appropriate workload for MapReduce}
