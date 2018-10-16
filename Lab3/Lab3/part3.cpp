@@ -16,7 +16,7 @@ vector<string> tokenizeData(ifstream &file) {
 	}
 	return wordVector;
 }
-vector<pair<string, int>> tallyWords(vector<string> &wordVector) {
+vector<pair<string, int> > tallyWords(vector<string> &wordVector) {
 	int instances = 1; // tracking instances of a word
 	int vectorSize = wordVector.size();
 	string word = wordVector[0];
@@ -43,7 +43,7 @@ bool sortByCount(const pair<string, int> &a,
 {
 	return (a.second > b.second);
 }
-void printCount(vector<pair<string, int>> &talliedVector) {
+void printCount(vector<pair<string, int> > &talliedVector) {
 	sort(talliedVector.begin(),talliedVector.end(),sortByCount);
 	for (int i = 0; i < talliedVector.size(); i++)
 	{
@@ -53,7 +53,7 @@ void printCount(vector<pair<string, int>> &talliedVector) {
 
 int main(int argc, char **argv)
 {
-	vector<pair<string, int>> countedWords;
+	vector<pair<string, int> > countedWords;
 
 	// open file (from Nic's code)
 	if (argc < 2) {
