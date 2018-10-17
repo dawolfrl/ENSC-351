@@ -6,6 +6,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage[table,xcdraw]{xcolor}
+\usepackage{booktabs}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 % title
@@ -15,14 +16,54 @@
 \author{Galen Elfert, Nic Klaassen, Diane Wolf}
 \maketitle
 % text
-\section{Explanation of workload}
-	The workload invented to fit the MapReduce framework better than word counts was {[matrix multiplication | distributed sort problem | merge sort problem]...}
+\section{Explanation of Workload}
+	The workload we designed as a better fit for the MapReduce framework is a distributed merge sort.
+
 \subsection{Conception}
-	{[Matrix multiplication | distributed sort problem | merge sort problem]} was chosen as a better alternative to word counts because...
-\subsection{Speed: Single-threaded implementation}
-	
-\subsection{Speed: MapReduce implementation}
-\subsection{Comparison}
+	In the word count implementation, the highly-parallelised map function does virtually no work, and the overhead of spinning up threads and copying the inputs/outputs far outweighs any possible performance benefit.
+	Looking for a better workload, we wanted to find an algorithm where a large amount of computation needs to be completed, and that computation can be broken down into discrete parts that can be completed in parallel.
+	We also wanted to find an algorithm with a good use for the reduce stage, where some non-trivial amount of work needs to be done combining outputs from the map stage.
+	Sorting was chosen as a better alternative to word counts, because it is a somewhat compute-heavy problem that can be easily broken down into chunks that need to be merged together.
+
+	For our distributed merge sort implementation, an array of size $ n $ is broken up into 4 chunks of size $ n/4 $, which are all sorted in parallel in the map stage.
+	In the reduce stage, pairs of sorted chunks of the original array are merged into 2 chunks of size $ n/2 $, these 2 merges are also completed in parallel.
+	A potential bottleneck in this implementation is the output stage, which must do a final merge of the last 2 chunks of size $ n/2 $.
+
+	In the limit, this algorithm can theoritically achieve a 4x speedup over a traditional merge sort based on equation~\ref{eq:sort}.
+	\begin{equation} \label{eq:sort}
+	\lim_{n\to\infty} \frac{\frac{n\log{n} - 2n}{4} + \frac{n}{2} + n}{n\log{n}} = \frac{1}{4}
+	\end{equation}
+	Intuitively, only $O(n)$ work needs to be done sequentially in the 2 merge steps, while the rest of the $O(n\log{n})$ sort is done concurrently on 4 cores.
+
+\subsection{Speed Comparison vs \texttt{std::sort}}
+	In practice, our algorithm achieved a 2.13x speedup over a single-threaded \texttt{std::sort}, on arrays of size 100,000 to 400,000.
+	While somewhat less than predicted, this level of speedup is fairly good considering the degree of optimization in \texttt{std::sort} and the typical losses involved with threading.
+	Timing data for our MapReduce sort vs \texttt{std::sort} on various array sizes is shown in figure~\ref{fig:sort-timing}. Times are averaged over 100 runs.
+% Need copy of image in repository
+%	\begin{figure}[!h]
+%	\centering
+%	\includegraphics[width=0.75\textwidth]{sort-timing}
+%	\caption{MapReduce Sorting vs std::sort\label{fig:sort-timing}}
+%	\end{figure}
+
+\subsection{Compared with Word Count}
+	The main reason this algorithm is a better fit for MapReduce than word count is that it does much more of its work in the map and reduce stages, which are executed in parallel.
+	We analyzed this behaviour in callgrind and found that our MapReduce sorting algorithm does over 85\% of its computation in the map stage.
+	A complete breakdown is shown in table~\ref{table:sortVwordcount}.
+
+	\begin{table}[!h]\centering
+	\renewcommand{\arraystretch}{1.3}
+		\begin{tabular}{@{}lllll@{}}
+			\toprule
+			 & input stage & map stage & reduce stage & output stage\\ \midrule
+			word count	&11.28\%	&11.72\%	&0.47\%	&11.21\%\\
+			sort		&0.00\%		&85.71\%	&5.30\%	&4.76\%	\\
+			\bottomrule
+		\end{tabular}
+		\caption{Word Count vs Sorting\label{table:sortVwordcount}}
+	\end{table}
+
+
 \section{Word count efficiency}
 	Both implementations of the program counted the instances of unique words (including capitalization and adjacent punctuation marks) in fifty paragraphs of Lorem Ipsum, which is 2261 words in length. They were run on the same machine with hardware to support twelve threads. Ten executions of each following implementations were conducted, with the duration and CPU usage measured with the built-in Linux \texttt{time} command:
 	\begin{itemize}
@@ -32,9 +73,9 @@
 	\end{itemize}
 	Additionally, call graphs for the single-threaded and MapReduce implementations were generated using Valgrind's Callgrind tool and visualized using KCachegrind.
 \subsection{Single-threaded implementation}
-	Table 2 below shows the execution time, as well as CPU usage, for each of the ten single-threaded word count runs. The word count program ran for a mean user time of 0.0016 seconds and a mean system time of 0.0028 - almost twice as long. This indicates that a great deal more time was spent by the CPU executing calls than in the program itself, which is consistent with single-threading. Since only one thread is tasked with carrying out many instructions, more time must be spent processing.
+	Table~\ref{table:singleImplWC} below shows the execution time, as well as CPU usage, for each of the ten single-threaded word count runs. The word count program ran for a mean user time of 0.0016 seconds and a mean system time of 0.0028 - almost twice as long. This indicates that a great deal more time was spent by the CPU executing calls than in the program itself, which is consistent with single-threading. Since only one thread is tasked with carrying out many instructions, more time must be spent processing.
 	
-	For a graphical representation of the call map for the single-threaded word count, see figure 2 at the end of this document.
+	For a graphical representation of the call map for the single-threaded word count, see figure~\ref{fig:callMapSingleImpl} at the end of this document.
 % single-threaded data
 	\begin{table}[h]
 	\centering
@@ -58,14 +99,14 @@
 	\rowcolor[HTML]{ECF4FF} 
 	\multicolumn{1}{r}{\cellcolor[HTML]{DAE8FC}std. dev. (s)} & 0.0021 & 0.0027 & 0.0107 & 0
 	\end{tabular}
-	\caption{Duration of single-threaded implementation measured by \texttt{time}}
+	\caption{Duration of single-threaded implementation measured by \texttt{time}\label{table:singleImplWC}}
 	\end{table}
 \subsection{MapReduce implementation}
-	The MapReduce implementation of the word count was tested with four threads and then the full twelve threads the machine was capable of supporting. Tables 3 and 4 below show the execution time, as well as CPU usage, for each of the ten word counts run with MapReduce with four and twelve threads, respectively. Note that the greater the quantity of threads used to multithread, the slower the program execution becomes. Further, as the thread count increased, the CPU usage also appeared to increase, going from an average of 10\% with four threads to an average of 40\% with 12 threads.
+	The MapReduce implementation of the word count was tested with four threads and then the full twelve threads the machine was capable of supporting. Tables~\ref{table:MR4ImplWC} and~\ref{table:MR12ImplWC} below show the execution time, as well as CPU usage, for each of the ten word counts run with MapReduce with four and twelve threads, respectively. Note that the greater the quantity of threads used to multithread, the slower the program execution becomes. Further, as the thread count increased, the CPU usage also appeared to increase, going from an average of 10\% with four threads to an average of 40\% with 12 threads.
 
 	The four- and twelve-threaded MapReduce implementation timings both showed a greater user time compared to system time, on average. With four threads, the mean user time was 0.0084 seconds and the mean system time was 0 seconds. With twelve threads, the mean user time was 0.0104 seconds and the mean system time was 0.0040 seconds. This meant most of the time was spent in the program, not the CPU as was the case with single-threading.
 
-	For a graphical representation of the call map for the MapReduce word count, see figure 3 at the end of this document.
+	For a graphical representation of the call map for the MapReduce word count, see figure~\ref{fig:callMapMRImpl} at the end of this document.
 \newpage
 % MapReduce data (4 threads)
 	\begin{table}[h]
@@ -88,7 +129,7 @@
 	\rowcolor[HTML]{ECF4FF} 
 	\multicolumn{1}{r}{\cellcolor[HTML]{DAE8FC}std. dev. (s)} & 0.0013 & 0 & 0.0074 & 31.6228
 	\end{tabular}
-	\caption{Duration of MapReduce implementation measured by \texttt{time}, with four threads}
+	\caption{Duration of MapReduce implementation measured by \texttt{time}, with four threads\label{table:MR4ImplWC}}
 	\end{table}
 % MapReduce data (12 threads)
 	\begin{table}[h]
@@ -112,25 +153,24 @@
 	\rowcolor[HTML]{ECF4FF} 
 	\multicolumn{1}{r}{\cellcolor[HTML]{DAE8FC}std. dev. (s)} & 0.0034 & 0.0033 & 0.0063 & 51.6398
 	\end{tabular}
-	\caption{Duration of MapReduce implementation measured by \texttt{time}, with twelve threads}
+	\caption{Duration of MapReduce implementation measured by \texttt{time}, with twelve threads\label{table:MR12ImplWC}}
 	\end{table}
 \subsection{Comparison}
 	An increase in threads used in the implementation of word counts appears to correspond with a decrease in time spent performing CPU calls and an increase in time spent in the program itself. As for wall time, there was not a clear difference between implementations - the single-threaded implementation came in with a mean wall time of 0.0140 seconds, the four-threaded MapReduce implementation with a mean wall time of 0.0190 seconds, and the twelve-threaded MapReduce implementation with a mean wall time of 0.0120 seconds.
 \section{Most appropriate workload for MapReduce}
-	Data that needs sorting?
+	
 \section{Impact of using multiple machines on execution speed}
 	
-% figures
 \newpage
 	\begin{figure}[h]
 	\centering
 	\includegraphics[width=1.35\textwidth, angle=90]{call-graph-part3-cropped}
-	\caption{Call map for single-threaded implementation of word count}
+	\caption{Call map for single-threaded implementation of word count\label{fig:callMapSingleImpl}}
 	\end{figure}
 \newpage
 	\begin{figure}[h]
 	\centering
 	\includegraphics[width=1.35\textwidth, angle=90]{call-graph-part4-cropped}
-	\caption{Call map for MapReduce implementation of word count (twelve threads)}
+	\caption{Call map for MapReduce implementation of word count (twelve threads)\label{fig:callMapMRImpl}}
 	\end{figure}
 \end{document}
